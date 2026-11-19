@@ -1,224 +1,490 @@
 <!doctype html>
 <html lang="ru">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Распределение на экзамен</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-:root{--bg:#f3f5fa;--card:#fff;--ink:#172033;--muted:#687386;--line:#e4e8f0;--accent:#315efb;--green:#168653;--red:#c0394b}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,-apple-system,Segoe UI,sans-serif}
-header{background:linear-gradient(120deg,#182b65,#315efb);color:#fff;padding:28px 18px 34px}
-.wrap{max-width:920px;margin:auto;padding:0 16px}h1{font-size:clamp(25px,5vw,36px);margin:0 0 6px}header p{margin:0;color:#dce5ff}
-main{padding:22px 0 48px}.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-bottom:16px}
-.status{color:var(--muted);font-size:14px}.groups{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:17px;box-shadow:0 5px 20px #1b2b5010}
-.cardtop{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:13px}.card h2{font-size:19px;margin:0}
-.pill{font-size:12px;font-weight:700;border-radius:30px;padding:5px 9px;background:#eaf7f0;color:var(--green);white-space:nowrap}
-.pill.full{background:#fff0f1;color:var(--red)}.slot{display:flex;align-items:center;gap:10px;padding:10px 11px;border-radius:11px;margin:7px 0;background:#f5f7fb;min-height:44px}
-.slot .num{color:#8b95a6;font-size:13px;width:18px}.slot .name{font-weight:600;overflow-wrap:anywhere}.slot.empty{border:1px dashed #cbd3e1;background:#fff;color:#929bad;cursor:pointer;transition:border-color .15s,background .15s}
-.slot.empty:hover{border-color:var(--accent);background:#f5f8ff;color:var(--ink)}
-.slot .free{margin-left:auto;font-size:12px;color:var(--green)}
-button{border:0;border-radius:11px;padding:11px 15px;background:var(--accent);color:white;font-weight:700;font-size:14px;cursor:pointer}
-button.secondary{background:#edf1ff;color:#294ed1}button.danger{background:#fff0f1;color:#b42c40}button:disabled{opacity:.45;cursor:not-allowed}
-.panel{margin-top:18px}.panel h2{margin:0 0 12px;font-size:20px}.formrow{display:flex;gap:9px;flex-wrap:wrap}.formrow input,.formrow select,input,select{font:inherit;padding:11px 12px;border:1px solid #d8deea;border-radius:10px;min-width:0;background:#fff}
-.formrow input{flex:1;min-width:180px}.hint{font-size:13px;color:var(--muted);margin:10px 0 0}
-.admin{margin-top:18px}.hidden{display:none!important}.adminhead{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
-.admincontrols{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.admincontrols input{flex:1;min-width:140px}
-.notice{padding:12px 14px;border-radius:12px;background:#fff8e7;color:#785313;margin:0 0 16px;font-size:14px}
-footer{text-align:center;color:var(--muted);font-size:12px;padding:0 16px 28px}
-dialog{border:0;border-radius:18px;padding:22px;width:min(420px,calc(100% - 28px));box-shadow:0 20px 80px #0003}dialog::backdrop{background:#11182788}dialog h2{margin-top:0}dialog input{width:100%;margin:6px 0 12px}
-@media(max-width:480px){header{padding-top:22px}.card{padding:14px}}
+:root{
+  --bg:#f4f6fb;
+  --card:#ffffff;
+  --ink:#0f172a;
+  --muted:#64748b;
+  --line:#e2e8f0;
+  --accent:#2563eb;
+  --accent-soft:#eff6ff;
+  --green:#059669;
+  --green-soft:#ecfdf5;
+  --red:#dc2626;
+  --red-soft:#fef2f2;
+  --shadow:0 8px 24px rgba(15,23,42,.06);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+
+header{
+  background:radial-gradient(circle at 85% 15%,#3b82f6 0%,transparent 45%),linear-gradient(135deg,#0f172a 0%,#1e3a8a 100%);
+  color:#fff;
+  padding:26px 16px 32px;
+}
+.wrap{max-width:960px;margin:auto;padding:0 16px}
+.head-row{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+h1{font-size:clamp(24px,5vw,34px);letter-spacing:-.02em;margin:0 0 6px}
+header p{margin:0;color:#cbd5e1;font-size:15px}
+.live-badge{
+  display:inline-flex;align-items:center;gap:7px;
+  background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);
+  padding:6px 12px;border-radius:999px;font-size:13px;font-weight:600;color:#fff;backdrop-filter:blur(6px);
+}
+.dot{width:8px;height:8px;border-radius:50%;background:#34d399;box-shadow:0 0 0 4px rgba(52,211,153,.25)}
+.dot.closed{background:#f87171;box-shadow:0 0 0 4px rgba(248,113,113,.25)}
+
+.progress-box{margin-top:18px;background:rgba(255,255,255,.1);border-radius:14px;padding:12px 14px}
+.progress-meta{display:flex;justify-content:space-between;font-size:13px;color:#e2e8f0;margin-bottom:8px;font-weight:600}
+.progress-track{height:8px;background:rgba(255,255,255,.18);border-radius:999px;overflow:hidden}
+.progress-fill{height:100%;width:0%;background:linear-gradient(90deg,#34d399,#60a5fa);border-radius:999px;transition:width .35s ease}
+
+main{padding:18px 0 calc(48px + env(safe-area-inset-bottom))}
+.controls-bar{
+  display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;
+  margin-bottom:16px;
+}
+.filter-pills{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.action-pills{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.chip{
+  border:1px solid var(--line);background:#fff;color:var(--ink);
+  padding:8px 14px;border-radius:999px;font-size:14px;font-weight:600;min-height:40px;cursor:pointer;
+}
+.chip.active{background:var(--ink);color:#fff;border-color:var(--ink)}
+
+.my-banner{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
+  background:var(--accent-soft);border:1px solid #bfdbfe;color:#1e40af;
+  padding:12px 14px;border-radius:14px;margin-bottom:16px;font-size:14px;font-weight:600;
+}
+.my-banner button{min-height:36px;padding:6px 12px;font-size:13px}
+
+.groups{display:grid;grid-template-columns:repeat(auto-fit,minmax(275px,1fr));gap:14px}
+.card{
+  background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;
+  box-shadow:var(--shadow);position:relative;overflow:hidden;
+}
+.card::before{content:"";position:absolute;left:0;right:0;top:0;height:4px;background:var(--accent)}
+.card.full-card::before{background:#cbd5e1}
+.cardtop{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:12px}
+.card h2{font-size:18px;margin:0;letter-spacing:-.01em}
+.pill{font-size:12px;font-weight:700;border-radius:999px;padding:4px 10px;background:var(--green-soft);color:var(--green);white-space:nowrap}
+.pill.full{background:var(--red-soft);color:var(--red)}
+
+.slot{
+  display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:12px;margin:7px 0;
+  background:#f8fafc;border:1px solid #eef2f6;min-height:46px;transition:transform .12s,border-color .15s,background .15s;
+}
+.slot.mine{background:var(--accent-soft);border-color:#93c5fd}
+.slot .num{
+  width:24px;height:24px;border-radius:8px;background:#e2e8f0;color:#475569;
+  display:grid;place-items:center;font-size:12px;font-weight:700;flex-shrink:0;
+}
+.slot.mine .num{background:var(--accent);color:#fff}
+.slot .avatar{
+  width:26px;height:26px;border-radius:50%;background:#dbeafe;color:#1d4ed8;
+  display:grid;place-items:center;font-size:12px;font-weight:800;flex-shrink:0;
+}
+.slot .name{font-weight:600;overflow-wrap:anywhere}
+.slot .badge-me{margin-left:auto;font-size:11px;font-weight:700;padding:3px 8px;border-radius:999px;background:var(--accent);color:#fff;white-space:nowrap}
+
+.slot.empty{border:1px dashed #cbd5e1;background:#fff;color:var(--muted);cursor:pointer}
+.slot.empty:hover,.slot.empty:active{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+.slot.empty .num{background:#f1f5f9;color:#64748b}
+.slot .free{margin-left:auto;font-size:12px;font-weight:700;color:var(--green);background:var(--green-soft);padding:3px 9px;border-radius:999px;white-space:nowrap}
+
+button{
+  border:0;border-radius:12px;padding:11px 16px;min-height:44px;
+  background:var(--accent);color:#fff;font-weight:700;font-size:15px;cursor:pointer;touch-action:manipulation;
+}
+button:hover{filter:brightness(1.04)}
+button.secondary{background:#e2e8f0;color:#1e293b}
+button.ghost{background:var(--accent-soft);color:#1d4ed8}
+button.danger{background:var(--red-soft);color:var(--red)}
+button:disabled{opacity:.45;cursor:not-allowed;filter:none}
+
+.panel{margin-top:20px}
+.panel h2{margin:0 0 12px;font-size:20px}
+.formrow{display:flex;gap:10px;flex-wrap:wrap}
+input,select{
+  font:inherit;font-size:16px;padding:11px 12px;min-height:46px;
+  border:1px solid #cbd5e1;border-radius:12px;min-width:0;background:#fff;color:var(--ink);
+}
+input:focus,select:focus{outline:2px solid #93c5fd;border-color:var(--accent)}
+.formrow input{flex:1;min-width:180px}
+.hint{font-size:13px;color:var(--muted);margin:10px 0 0}
+.msg{margin-top:12px;padding:11px 13px;border-radius:12px;font-size:14px;font-weight:600}
+.msg.err{background:var(--red-soft);color:var(--red);border:1px solid #fecaca}
+.msg.ok{background:var(--green-soft);color:var(--green);border:1px solid #a7f3d0}
+
+.admin{margin-top:18px}.hidden{display:none!important}
+.adminhead{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.admincontrols{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.admincontrols input{flex:1;min-width:140px}
+.notice{padding:12px 14px;border-radius:12px;background:#fffbeb;border:1px solid #fde68a;color:#92400e;margin:0 0 16px;font-size:14px}
+footer{text-align:center;color:var(--muted);font-size:12px;padding:0 16px calc(28px + env(safe-area-inset-bottom))}
+
+dialog{border:0;border-radius:18px;padding:22px;width:min(420px,calc(100% - 28px));box-shadow:0 20px 80px rgba(0,0,0,.25)}
+dialog::backdrop{background:rgba(15,23,42,.55)}dialog h2{margin-top:0}dialog input{width:100%;margin:6px 0 12px}
+
+.empty-state{grid-column:1/-1;text-align:center;padding:28px 16px;background:#fff;border:1px dashed var(--line);border-radius:16px;color:var(--muted)}
+
+@media(max-width:600px){
+  header{padding:20px 16px 24px}
+  .card{padding:14px;border-radius:16px}
+  .formrow input,.formrow select,.formrow button{width:100%;flex:none}
+  .admincontrols input,.admincontrols select,.admincontrols button{width:100%;flex:none}
+}
 </style>
 </head>
 <body>
-<header><div class="wrap"><h1>Распределение на экзамен</h1><p>Выбери свободное место в одной из пятёрок</p></div></header>
+<header>
+  <div class="wrap">
+    <div class="head-row">
+      <div>
+        <h1>Распределение на экзамен</h1>
+        <p>Выберите свободное место в нужной пятёрке</p>
+      </div>
+      <div class="live-badge"><span class="dot" id="liveDot"></span><span id="status">Подключение…</span></div>
+    </div>
+    <div class="progress-box">
+      <div class="progress-meta">
+        <span id="total">Загрузка списка…</span>
+        <span id="pct">0%</span>
+      </div>
+      <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    </div>
+  </div>
+</header>
+
 <main class="wrap">
-<div id="setupNotice" class="notice hidden">Сайт пока не подключён к общей базе. Для совместной работы администратору нужно выполнить настройку из README.md.</div>
-<div class="toolbar"><div><strong id="total">Загрузка списка…</strong><div class="status" id="status">Подключение</div></div><button class="secondary" id="refreshBtn">Обновить</button></div>
-<div id="groups" class="groups"></div>
-<section class="card panel" id="joinPanel">
-<h2>Занять свободное место</h2>
-<div class="formrow">
-<input id="surname" maxlength="60" placeholder="Ваша фамилия" autocomplete="family-name">
-<select id="groupSelect"><option value="">Выберите пятёрку</option></select>
-<select id="positionSelect" disabled><option value="">Выберите место (1–5)</option></select>
-<button id="joinBtn">Записаться</button>
-</div>
-<p class="hint">Выберите пятёрку и номер места от 1 до 5 (или нажмите прямо на свободное место в карточке выше). Если ваша фамилия уже указана или место занято, обратитесь к администратору.</p>
-</section>
-<section class="card admin">
-<div class="adminhead"><h2>Панель администратора</h2><button class="secondary" id="adminLoginBtn">Вход для администратора</button></div>
-<div id="adminArea" class="hidden">
-<p class="status" id="adminIdentity"></p>
-<div class="admincontrols"><input id="newGroupName" maxlength="40" placeholder="Название новой пятёрки"><button id="addGroupBtn">Добавить пятёрку</button><button class="danger" id="closeSignupBtn">Закрыть запись</button></div>
-<p class="hint">Администратор может удалять записи, добавлять пятёрки и управлять доступом помощников.</p>
-<div class="admincontrols">
-<input id="adminSurname" maxlength="60" placeholder="Фамилия участника">
-<select id="adminGroupSelect"><option value="">Пятёрка</option></select>
-<select id="adminPositionSelect" disabled><option value="">Место</option></select>
-<button id="adminAddPersonBtn">Добавить участника</button>
-</div>
-<div id="adminGroups"></div>
-<div class="admincontrols"><input id="helperEmail" type="email" placeholder="Email пользователя Supabase"><button id="addHelperBtn">Назначить администратором</button></div>
-<div id="adminUsers" class="hint"></div>
-<button class="secondary" id="logoutBtn" style="margin-top:12px">Выйти</button>
-</div>
-</section>
-</main><footer>Общая таблица распределения · Изменения видны всем участникам</footer>
-<dialog id="loginDialog"><h2>Вход администратора</h2><input id="email" type="email" placeholder="Email"><input id="password" type="password" placeholder="Пароль"><div class="formrow"><button id="loginBtn">Войти</button><button class="secondary" id="cancelLoginBtn">Отмена</button></div><p class="hint">Участникам вход не нужен.</p></dialog>
+  <div id="setupNotice" class="notice hidden">Сайт пока не подключён к общей базе. Для совместной работы администратору нужно выполнить настройку из README.md.</div>
+
+  <div id="myBanner" class="my-banner hidden">
+    <span id="myBannerText"></span>
+    <button class="ghost" id="jumpToMineBtn" type="button">Показать в списке</button>
+  </div>
+
+  <div class="controls-bar">
+    <div class="filter-pills">
+      <button class="chip active" data-filter="all" type="button">Все</button>
+      <button class="chip" data-filter="free" type="button">Есть места</button>
+    </div>
+    <div class="action-pills">
+      <button class="ghost" id="toJoinBtn" type="button">К записи ↓</button>
+      <button class="secondary" id="refreshBtn" type="button">Обновить</button>
+    </div>
+  </div>
+
+  <div id="groups" class="groups"></div>
+
+  <section class="card panel" id="joinPanel">
+    <h2>Занять свободное место</h2>
+    <div class="formrow">
+      <input id="surname" maxlength="60" placeholder="Ваша фамилия" autocomplete="family-name" enterkeyhint="done">
+      <select id="groupSelect"><option value="">Выберите пятёрку</option></select>
+      <select id="positionSelect" disabled><option value="">Выберите место (1–5)</option></select>
+      <button id="joinBtn" type="button">Записаться</button>
+    </div>
+    <div id="formMessage" class="msg hidden" role="status"></div>
+    <p class="hint">Нажмите «+ Выбрать» прямо на свободном месте в карточке выше или выберите пятёрку и место вручную.</p>
+  </section>
+
+  <section class="card admin">
+    <div class="adminhead">
+      <h2>Панель администратора</h2>
+      <button class="secondary" id="adminLoginBtn" type="button">Вход для администратора</button>
+    </div>
+    <div id="adminArea" class="hidden">
+      <p class="hint" id="adminIdentity"></p>
+      <div class="admincontrols">
+        <input id="newGroupName" maxlength="40" placeholder="Название новой пятёрки">
+        <button id="addGroupBtn" type="button">Добавить пятёрку</button>
+        <button class="danger" id="closeSignupBtn" type="button">Закрыть запись</button>
+      </div>
+      <div class="admincontrols">
+        <input id="adminSurname" maxlength="60" placeholder="Фамилия участника">
+        <select id="adminGroupSelect"><option value="">Пятёрка</option></select>
+        <select id="adminPositionSelect" disabled><option value="">Место</option></select>
+        <button id="adminAddPersonBtn" type="button">Добавить участника</button>
+      </div>
+      <div id="adminMessage" class="msg hidden" role="status"></div>
+      <div id="adminGroups"></div>
+      <div class="admincontrols">
+        <input id="helperEmail" type="email" placeholder="Email пользователя Supabase">
+        <button id="addHelperBtn" type="button">Назначить администратором</button>
+      </div>
+      <div id="adminUsers" class="hint"></div>
+      <button class="secondary" id="logoutBtn" type="button" style="margin-top:12px">Выйти</button>
+    </div>
+  </section>
+</main>
+
+<footer>Общая таблица распределения · Изменения синхронизируются автоматически</footer>
+
+<dialog id="loginDialog">
+  <h2>Вход администратора</h2>
+  <input id="email" type="email" placeholder="Email">
+  <input id="password" type="password" placeholder="Пароль">
+  <div class="formrow">
+    <button id="loginBtn" type="button">Войти</button>
+    <button class="secondary" id="cancelLoginBtn" type="button">Отмена</button>
+  </div>
+  <p class="hint">Участникам вход не нужен.</p>
+</dialog>
+
 <script>
 const SUPABASE_URL = "https://jccrxqnbrudocefxlcfn.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_umYTJwW6Pm7olXmljmbtvw_txwRRZbU";
 const configured = SUPABASE_URL.startsWith("https://") && !SUPABASE_URL.includes("PASTE_") && !SUPABASE_ANON_KEY.includes("PASTE_");
 const $ = id => document.getElementById(id);
-let db=null, groups=[], slots=[], isAdmin=false, signupOpen=true;
-const demoGroups = [{id:"demo1",name:"Первая пятёрка"},{id:"demo2",name:"Вторая пятёрка"},{id:"demo3",name:"Третья пятёрка"}];
+
+let db=null, groups=[], slots=[], isAdmin=false, signupOpen=true, activeFilter="all";
+const demoGroups = [{id:"demo1",name:"Пятёрка 1"},{id:"demo2",name:"Пятёрка 2"},{id:"demo3",name:"Пятёрка 3"}];
+
 function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function initial(name){return (String(name).trim()[0]||"?").toUpperCase();}
+
+function getMySlot(){
+  try{return JSON.parse(localStorage.getItem("exam_my_slot")||"null");}catch{return null;}
+}
+function saveMySlot(groupId, position, surname){
+  try{localStorage.setItem("exam_my_slot", JSON.stringify({groupId, position, surname}));}catch{}
+}
+
+function showMsg(elId, text, type="err"){
+  const el=$(elId);
+  if(!text){el.classList.add("hidden");el.textContent="";return;}
+  el.textContent=text;
+  el.className=`msg ${type}`;
+}
 
 function updatePositionSelect(selectEl, groupId, previousValue){
- if(!groupId){
-  selectEl.innerHTML='<option value="">Выберите место (1–5)</option>';
-  selectEl.disabled=true;
-  return;
- }
- const entries=slots.filter(s=>s.group_id===groupId);
- let html='<option value="">Выберите место (1–5)</option>';
- for(let pos=1;pos<=5;pos++){
-  const taken=entries.find(x=>x.position===pos);
-  if(taken){
-   html+=`<option value="${pos}" disabled>Место ${pos} — занято (${esc(taken.surname)})</option>`;
-  }else{
-   html+=`<option value="${pos}">Место ${pos} — свободно</option>`;
+  if(!groupId){
+    selectEl.innerHTML='<option value="">Выберите место (1–5)</option>';
+    selectEl.disabled=true;
+    return;
   }
- }
- selectEl.innerHTML=html;
- selectEl.disabled=false;
- if(previousValue){
-  const opt=selectEl.querySelector(`option[value="${CSS.escape(String(previousValue))}"]`);
-  if(opt && !opt.disabled) selectEl.value=String(previousValue);
- }
+  const entries=slots.filter(s=>s.group_id===groupId);
+  let html='<option value="">Выберите место (1–5)</option>';
+  for(let pos=1;pos<=5;pos++){
+    const taken=entries.find(x=>x.position===pos);
+    html+=taken
+      ? `<option value="${pos}" disabled>Место ${pos} — занято (${esc(taken.surname)})</option>`
+      : `<option value="${pos}">Место ${pos} — свободно</option>`;
+  }
+  selectEl.innerHTML=html;
+  selectEl.disabled=false;
+  if(previousValue){
+    const opt=selectEl.querySelector(`option[value="${CSS.escape(String(previousValue))}"]`);
+    if(opt && !opt.disabled) selectEl.value=String(previousValue);
+  }
 }
 
 window.pickSlot=(groupId, position)=>{
- if(!signupOpen) return;
- $("groupSelect").value=groupId;
- updatePositionSelect($("positionSelect"), groupId, position);
- $("joinPanel").scrollIntoView({behavior:"smooth", block:"nearest"});
- $("surname").focus();
+  if(!signupOpen){showMsg("formMessage","Запись закрыта администратором.");return;}
+  showMsg("formMessage","");
+  $("groupSelect").value=groupId;
+  updatePositionSelect($("positionSelect"), groupId, position);
+  $("joinPanel").scrollIntoView({behavior:"smooth", block:"center"});
+  $("surname").focus();
 };
 
 function render(){
- const list=groups.length?groups:demoGroups;
- const occupied=slots.length;
- const capacity=list.length*5;
- const prevGroup=$("groupSelect").value;
- const prevPos=$("positionSelect").value;
+  const list=groups.length?groups:demoGroups;
+  const occupied=slots.length;
+  const capacity=list.length*5;
+  const pct=capacity?Math.round((occupied/capacity)*100):0;
+  const prevGroup=$("groupSelect").value;
+  const prevPos=$("positionSelect").value;
+  const mine=getMySlot();
 
- $("total").textContent=`Занято ${occupied} из ${capacity} мест`;
- $("status").textContent=signupOpen?"Запись открыта":"Запись закрыта администратором";
- $("groups").innerHTML=list.map(g=>{
-  const entries=slots.filter(s=>s.group_id===g.id).sort((a,b)=>a.position-b.position);
-  return `<article class="card"><div class="cardtop"><h2>${esc(g.name)}</h2><span class="pill ${entries.length===5?'full':''}">${entries.length}/5 занято</span></div>`+
-  Array.from({length:5},(_,i)=>{
-   const pos=i+1;
-   const s=entries.find(x=>x.position===pos);
-   if(s){
-    return `<div class="slot"><span class="num">${pos}.</span><span class="name">${esc(s.surname)}</span></div>`;
-   }
-   return `<div class="slot empty" onclick="pickSlot('${esc(g.id)}', ${pos})" title="Нажмите, чтобы выбрать это место"><span class="num">${pos}.</span><span>Свободное место</span><span class="free">Выбрать</span></div>`;
-  }).join("")+`</article>`;
- }).join("");
+  $("total").textContent=`Занято ${occupied} из ${capacity} мест`;
+  $("pct").textContent=`${pct}%`;
+  $("progressFill").style.width=`${pct}%`;
+  $("status").textContent=signupOpen?"Запись открыта":"Запись закрыта";
+  $("liveDot").classList.toggle("closed",!signupOpen);
 
- $("groupSelect").innerHTML='<option value="">Выберите пятёрку</option>'+list.map(g=>{
-  const count=slots.filter(s=>s.group_id===g.id).length;
-  const free=5-count;
-  return `<option value="${esc(g.id)}" ${free===0?'disabled':''}>${esc(g.name)}${free===0?' (мест нет)':` (свободно: ${free})`}</option>`;
- }).join("");
+  if(mine){
+    const foundGroup=list.find(g=>g.id===mine.groupId);
+    const foundSlot=slots.find(s=>s.group_id===mine.groupId && s.position===mine.position && s.surname.toLowerCase()===mine.surname.toLowerCase());
+    if(foundGroup && foundSlot){
+      $("myBanner").classList.remove("hidden");
+      $("myBannerText").textContent=`Ваша запись: ${foundGroup.name}, место ${mine.position} (${foundSlot.surname})`;
+      $("jumpToMineBtn").onclick=()=>{
+        const card=document.getElementById("group-"+foundGroup.id);
+        if(card) card.scrollIntoView({behavior:"smooth", block:"center"});
+      };
+    }else{
+      $("myBanner").classList.add("hidden");
+    }
+  }else{
+    $("myBanner").classList.add("hidden");
+  }
 
- if(prevGroup && list.some(g=>g.id===prevGroup)){
-  $("groupSelect").value=prevGroup;
- }
- updatePositionSelect($("positionSelect"), $("groupSelect").value, prevPos);
+  const filtered=list.filter(g=>{
+    const entries=slots.filter(s=>s.group_id===g.id);
+    if(activeFilter==="free" && entries.length>=5) return false;
+    return true;
+  });
 
- $("joinBtn").disabled=!configured||!signupOpen||!isFinite(capacity)||capacity===0;
- if(isAdmin) renderAdmin();
+  if(!filtered.length){
+    $("groups").innerHTML='<div class="empty-state">Свободных мест пока нет.</div>';
+  }else{
+    $("groups").innerHTML=filtered.map(g=>{
+      const entries=slots.filter(s=>s.group_id===g.id).sort((a,b)=>a.position-b.position);
+      const isFull=entries.length===5;
+      return `<article class="card${isFull?' full-card':''}" id="group-${esc(g.id)}"><div class="cardtop"><h2>${esc(g.name)}</h2><span class="pill ${isFull?'full':''}">${entries.length}/5 занято</span></div>`+
+      Array.from({length:5},(_,i)=>{
+        const pos=i+1;
+        const s=entries.find(x=>x.position===pos);
+        if(s){
+          const isMine=mine && mine.groupId===g.id && mine.position===pos && mine.surname.toLowerCase()===s.surname.toLowerCase();
+          return `<div class="slot${isMine?' mine':''}"><span class="num">${pos}</span><span class="avatar">${esc(initial(s.surname))}</span><span class="name">${esc(s.surname)}</span>${isMine?'<span class="badge-me">Вы</span>':''}</div>`;
+        }
+        return `<div class="slot empty" onclick="pickSlot('${esc(g.id)}', ${pos})"><span class="num">${pos}</span><span>Свободное место</span><span class="free">+ Выбрать</span></div>`;
+      }).join("")+`</article>`;
+    }).join("");
+  }
+
+  $("groupSelect").innerHTML='<option value="">Выберите пятёрку</option>'+list.map(g=>{
+    const count=slots.filter(s=>s.group_id===g.id).length;
+    const free=5-count;
+    return `<option value="${esc(g.id)}" ${free===0?'disabled':''}>${esc(g.name)}${free===0?' (мест нет)':` (свободно: ${free})`}</option>`;
+  }).join("");
+
+  if(prevGroup && list.some(g=>g.id===prevGroup)) $("groupSelect").value=prevGroup;
+  updatePositionSelect($("positionSelect"), $("groupSelect").value, prevPos);
+  $("joinBtn").disabled=!configured||!signupOpen||!isFinite(capacity)||capacity===0;
+  if(isAdmin) renderAdmin();
 }
 
 async function load(){
- if(!configured){$("setupNotice").classList.remove("hidden");groups=demoGroups;slots=[];render();$("status").textContent="Демонстрационный режим — данные не сохраняются";return;}
- const [{data:g,error:ge},{data:s,error:se},{data:st}] = await Promise.all([
-  db.from("exam_groups").select("*").order("sort_order"),
-  db.from("exam_slots").select("*").order("group_id").order("position"),
-  db.from("app_settings").select("value").eq("key","signup_open").maybeSingle()
- ]);
- if(ge||se){$("status").textContent="Ошибка загрузки: "+(ge?.message||se?.message);return;}
- groups=g||[];slots=s||[];signupOpen=st?.value!=="false";render();
+  if(!configured){$("setupNotice").classList.remove("hidden");groups=demoGroups;slots=[];render();$("status").textContent="Демо-режим";return;}
+  if(!db){$("status").textContent="Ошибка загрузки Supabase";return;}
+  const [{data:g,error:ge},{data:s,error:se},{data:st}] = await Promise.all([
+    db.from("exam_groups").select("*").order("sort_order"),
+    db.from("exam_slots").select("*").order("group_id").order("position"),
+    db.from("app_settings").select("value").eq("key","signup_open").maybeSingle()
+  ]);
+  if(ge||se){$("status").textContent="Ошибка загрузки";return;}
+  groups=g||[];slots=s||[];signupOpen=st?.value!=="false";render();
 }
 
 async function reserve(){
- const surname=$("surname").value.trim().replace(/\s+/g," ");
- const groupId=$("groupSelect").value;
- const position=Number($("positionSelect").value);
- if(surname.length<2||!groupId||!position){alert("Укажите фамилию, пятёрку и свободное место.");return;}
- $("joinBtn").disabled=true;
- const {error}=await db.rpc("reserve_exam_slot",{p_group_id:groupId,p_surname:surname,p_position:position});
- $("joinBtn").disabled=false;
- if(error){
-  if(error.message.includes("duplicate")) alert("Такая фамилия уже записана. Обратитесь к администратору.");
-  else if(error.message.includes("position")||error.message.includes("occupied")||error.message.includes("unique")) alert("Это место уже занято. Выберите другое.");
-  else alert(error.message);
-  await load();
-  return;
- }
- $("surname").value="";
- $("positionSelect").value="";
- await load();
- alert("Готово! Вы записаны.");
+  showMsg("formMessage","");
+  if(!db){showMsg("formMessage","Нет подключения к базе данных. Обновите страницу.");return;}
+  const surname=$("surname").value.trim().replace(/\s+/g," ");
+  const groupId=$("groupSelect").value;
+  const position=Number($("positionSelect").value);
+  if(surname.length<2){showMsg("formMessage","Введите фамилию (минимум 2 символа).");$("surname").focus();return;}
+  if(!groupId){showMsg("formMessage","Выберите пятёрку.");$("groupSelect").focus();return;}
+  if(!position){showMsg("formMessage","Выберите свободное место (1–5).");$("positionSelect").focus();return;}
+
+  $("joinBtn").disabled=true;
+  try{
+    const {error}=await db.rpc("reserve_exam_slot",{p_group_id:groupId,p_surname:surname,p_position:position});
+    if(error){
+      const m=error.message||"";
+      if(m.includes("schema cache")||m.includes("Could not find the function")){
+        showMsg("formMessage","Функция reserve_exam_slot в Supabase ещё не поддерживает параметр p_position.");
+      }else if(m.includes("already occupied")||m.includes("exam_slots_group_id_position")){
+        showMsg("formMessage","Это место уже занято. Выберите другое.");
+      }else if(m.includes("duplicate")){
+        showMsg("formMessage","Такая фамилия уже записана. Обратитесь к администратору.");
+      }else{
+        showMsg("formMessage","Ошибка записи: "+m);
+      }
+      await load();
+      return;
+    }
+    saveMySlot(groupId, position, surname);
+    $("surname").value="";
+    $("positionSelect").value="";
+    await load();
+    showMsg("formMessage","Готово! Вы записаны.","ok");
+    const card=document.getElementById("group-"+groupId);
+    if(card) card.scrollIntoView({behavior:"smooth", block:"center"});
+  }catch(e){
+    showMsg("formMessage","Сетевая ошибка: "+(e?.message||e));
+  }finally{
+    $("joinBtn").disabled=!configured||!signupOpen;
+  }
 }
 
 async function checkAdmin(){
- const {data:{user}}=await db.auth.getUser();
- if(!user){isAdmin=false;$("adminArea").classList.add("hidden");$("adminLoginBtn").classList.remove("hidden");return;}
- const {data}=await db.from("exam_admins").select("user_id").eq("user_id",user.id).maybeSingle();
- isAdmin=!!data;
- $("adminArea").classList.toggle("hidden",!isAdmin);$("adminLoginBtn").classList.toggle("hidden",isAdmin);
- $("adminIdentity").textContent=isAdmin?`Вы вошли как ${user.email}`:"У этой учётной записи нет прав администратора.";
- if(!isAdmin)await db.auth.signOut();
+  const {data:{user}}=await db.auth.getUser();
+  if(!user){isAdmin=false;$("adminArea").classList.add("hidden");$("adminLoginBtn").classList.remove("hidden");return;}
+  const {data}=await db.from("exam_admins").select("user_id").eq("user_id",user.id).maybeSingle();
+  isAdmin=!!data;
+  $("adminArea").classList.toggle("hidden",!isAdmin);$("adminLoginBtn").classList.toggle("hidden",isAdmin);
+  $("adminIdentity").textContent=isAdmin?`Вы вошли как ${user.email}`:"У этой учётной записи нет прав администратора.";
+  if(!isAdmin)await db.auth.signOut();
 }
 
 function renderAdmin(){
- const prevAdminGroup=$("adminGroupSelect").value;
- const prevAdminPos=$("adminPositionSelect").value;
- $("adminGroupSelect").innerHTML='<option value="">Пятёрка</option>'+groups.map(g=>`<option value="${esc(g.id)}">${esc(g.name)}</option>`).join("");
- if(prevAdminGroup && groups.some(g=>g.id===prevAdminGroup)) $("adminGroupSelect").value=prevAdminGroup;
- updatePositionSelect($("adminPositionSelect"), $("adminGroupSelect").value, prevAdminPos);
+  const prevAdminGroup=$("adminGroupSelect").value;
+  const prevAdminPos=$("adminPositionSelect").value;
+  $("adminGroupSelect").innerHTML='<option value="">Пятёрка</option>'+groups.map(g=>`<option value="${esc(g.id)}">${esc(g.name)}</option>`).join("");
+  if(prevAdminGroup && groups.some(g=>g.id===prevAdminGroup)) $("adminGroupSelect").value=prevAdminGroup;
+  updatePositionSelect($("adminPositionSelect"), $("adminGroupSelect").value, prevAdminPos);
 
- $("adminGroups").innerHTML=groups.map(g=>`<div style="border-top:1px solid #e4e8f0;padding:12px 0"><strong>${esc(g.name)}</strong><div class="admincontrols">${slots.filter(s=>s.group_id===g.id).sort((a,b)=>a.position-b.position).map(s=>`<span style="background:#f3f5fa;padding:7px 9px;border-radius:8px">${s.position}. ${esc(s.surname)} <button class="secondary" style="padding:4px 7px" onclick="editSlot('${esc(s.id)}')">Изменить</button><button class="danger" style="padding:4px 7px" onclick="removeSlot('${esc(s.id)}')">×</button></span>`).join("")}<button class="danger" onclick="removeGroup('${esc(g.id)}')">Удалить пятёрку</button></div></div>`).join("");
- $("closeSignupBtn").textContent=signupOpen?"Закрыть запись":"Открыть запись";
- loadAdmins();
+  $("adminGroups").innerHTML=groups.map(g=>`<div style="border-top:1px solid #e2e8f0;padding:12px 0"><strong>${esc(g.name)}</strong><div class="admincontrols">${slots.filter(s=>s.group_id===g.id).sort((a,b)=>a.position-b.position).map(s=>`<span style="background:#f1f5f9;padding:7px 10px;border-radius:10px;display:inline-flex;align-items:center;gap:6px">${s.position}. ${esc(s.surname)} <button class="secondary" style="padding:4px 8px;min-height:30px;font-size:12px" onclick="editSlot('${esc(s.id)}')">Изменить</button><button class="danger" style="padding:4px 8px;min-height:30px;font-size:12px" onclick="removeSlot('${esc(s.id)}')">×</button></span>`).join("")}<button class="danger" style="min-height:36px;padding:6px 12px;font-size:13px" onclick="removeGroup('${esc(g.id)}')">Удалить пятёрку</button></div></div>`).join("");
+  $("closeSignupBtn").textContent=signupOpen?"Закрыть запись":"Открыть запись";
+  loadAdmins();
 }
 
 async function loadAdmins(){
- const {data,error}=await db.rpc("list_exam_admins");
- if(error){$("adminUsers").textContent="Не удалось загрузить список администраторов: "+error.message;return;}
- $("adminUsers").innerHTML="<strong>Администраторы:</strong> "+(data||[]).map(a=>`${esc(a.email)} <button class="danger" style="padding:4px 8px" onclick="removeHelper('${esc(a.user_id)}')">Снять права</button>`).join(" · ");
+  const {data,error}=await db.rpc("list_exam_admins");
+  if(error){$("adminUsers").textContent="Не удалось загрузить список администраторов: "+error.message;return;}
+  $("adminUsers").innerHTML="<strong>Администраторы:</strong> "+(data||[]).map(a=>`${esc(a.email)} <button class="danger" style="padding:4px 8px;min-height:28px;font-size:12px" onclick="removeHelper('${esc(a.user_id)}')">Снять права</button>`).join(" · ");
 }
 
-$("groupSelect").onchange=()=>updatePositionSelect($("positionSelect"), $("groupSelect").value, "");
-$("adminGroupSelect").onchange=()=>updatePositionSelect($("adminPositionSelect"), $("adminGroupSelect").value, "");
+document.querySelectorAll(".chip").forEach(btn=>{
+  btn.onclick=()=>{
+    activeFilter=btn.dataset.filter;
+    document.querySelectorAll(".chip").forEach(b=>b.classList.toggle("active", b===btn));
+    render();
+  };
+});
+$("groupSelect").onchange=()=>{showMsg("formMessage","");updatePositionSelect($("positionSelect"), $("groupSelect").value, "");};
+$("adminGroupSelect").onchange=()=>{showMsg("adminMessage","");updatePositionSelect($("adminPositionSelect"), $("adminGroupSelect").value, "");};
+$("toJoinBtn").onclick=()=>$("joinPanel").scrollIntoView({behavior:"smooth", block:"center"});
 
-window.removeSlot=async id=>{if(confirm("Удалить эту запись?")){const {error}=await db.from("exam_slots").delete().eq("id",id);if(error)alert(error.message);await load();}};
-window.editSlot=async id=>{const slot=slots.find(x=>x.id===id);if(!slot)return;const name=prompt("Новая фамилия:",slot.surname);if(name===null)return;const clean=name.trim().replace(/\s+/g," ");if(clean.length<2){alert("Фамилия слишком короткая.");return;}const {error}=await db.from("exam_slots").update({surname:clean}).eq("id",id);if(error){alert(error.message);return;}await load();};
-window.removeGroup=async id=>{if(confirm("Удалить пятёрку и все её записи?")){const {error}=await db.from("exam_groups").delete().eq("id",id);if(error)alert(error.message);await load();}};
+window.removeSlot=async id=>{if(confirm("Удалить эту запись?")){const {error}=await db.from("exam_slots").delete().eq("id",id);if(error)showMsg("adminMessage",error.message);await load();}};
+window.editSlot=async id=>{const slot=slots.find(x=>x.id===id);if(!slot)return;const name=prompt("Новая фамилия:",slot.surname);if(name===null)return;const clean=name.trim().replace(/\s+/g," ");if(clean.length<2){showMsg("adminMessage","Фамилия слишком короткая.");return;}const {error}=await db.from("exam_slots").update({surname:clean}).eq("id",id);if(error){showMsg("adminMessage",error.message);return;}await load();};
+window.removeGroup=async id=>{if(confirm("Удалить пятёрку и все её записи?")){const {error}=await db.from("exam_groups").delete().eq("id",id);if(error)showMsg("adminMessage",error.message);await load();}};
 $("refreshBtn").onclick=load;$("joinBtn").onclick=reserve;
 $("adminLoginBtn").onclick=()=>$("loginDialog").showModal();$("cancelLoginBtn").onclick=()=>$("loginDialog").close();
 $("loginBtn").onclick=async()=>{const {error}=await db.auth.signInWithPassword({email:$("email").value,password:$("password").value});if(error){alert(error.message);return;}$("loginDialog").close();await checkAdmin();await load();};
 $("logoutBtn").onclick=async()=>{await db.auth.signOut();await checkAdmin();};
-$("addGroupBtn").onclick=async()=>{const name=$("newGroupName").value.trim();if(!name)return;const {error}=await db.from("exam_groups").insert({name,sort_order:groups.length+1});if(error)alert(error.message);else $("newGroupName").value="";await load();};
-$("adminAddPersonBtn").onclick=async()=>{const surname=$("adminSurname").value.trim().replace(/\s+/g," "),groupId=$("adminGroupSelect").value,position=Number($("adminPositionSelect").value);if(surname.length<2||!groupId||!position){alert("Укажите фамилию, пятёрку и свободное место.");return;}const {error}=await db.rpc("reserve_exam_slot",{p_group_id:groupId,p_surname:surname,p_position:position});if(error){alert(error.message);return;}$("adminSurname").value="";$("adminPositionSelect").value="";await load();};
-$("closeSignupBtn").onclick=async()=>{signupOpen=!signupOpen;const {error}=await db.from("app_settings").upsert({key:"signup_open",value:String(signupOpen)});if(error)alert(error.message);await load();};
-$("addHelperBtn").onclick=async()=>{const email=$("helperEmail").value.trim();if(!email){alert("Введи email пользователя.");return;}const {error}=await db.rpc("grant_exam_admin_by_email",{p_email:email});if(error){alert(error.message);return;}$("helperEmail").value="";await loadAdmins();alert("Права администратора выданы.");};
-window.removeHelper=async id=>{if(!confirm("Снять права администратора у этого пользователя?"))return;const {error}=await db.rpc("revoke_exam_admin",{p_user_id:id});if(error){alert(error.message);return;}await loadAdmins();};
-(async()=>{if(!configured){await load();return;}db=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);await checkAdmin();await load();db.channel("exam-live").on("postgres_changes",{event:"*",schema:"public",table:"exam_slots"},load).on("postgres_changes",{event:"*",schema:"public",table:"exam_groups"},load).on("postgres_changes",{event:"*",schema:"public",table:"app_settings"},load).subscribe();})();
+$("addGroupBtn").onclick=async()=>{const name=$("newGroupName").value.trim();if(!name)return;const {error}=await db.from("exam_groups").insert({name,sort_order:groups.length+1});if(error)showMsg("adminMessage",error.message);else $("newGroupName").value="";await load();};
+$("adminAddPersonBtn").onclick=async()=>{
+  showMsg("adminMessage","");
+  const surname=$("adminSurname").value.trim().replace(/\s+/g," "),groupId=$("adminGroupSelect").value,position=Number($("adminPositionSelect").value);
+  if(surname.length<2||!groupId||!position){showMsg("adminMessage","Укажите фамилию, пятёрку и свободное место.");return;}
+  const {error}=await db.rpc("reserve_exam_slot",{p_group_id:groupId,p_surname:surname,p_position:position});
+  if(error){showMsg("adminMessage",error.message);return;}
+  $("adminSurname").value="";$("adminPositionSelect").value="";await load();showMsg("adminMessage","Участник добавлен.","ok");
+};
+$("closeSignupBtn").onclick=async()=>{signupOpen=!signupOpen;const {error}=await db.from("app_settings").upsert({key:"signup_open",value:String(signupOpen)});if(error)showMsg("adminMessage",error.message);await load();};
+$("addHelperBtn").onclick=async()=>{const email=$("helperEmail").value.trim();if(!email){showMsg("adminMessage","Введите email пользователя.");return;}const {error}=await db.rpc("grant_exam_admin_by_email",{p_email:email});if(error){showMsg("adminMessage",error.message);return;}$("helperEmail").value="";await loadAdmins();showMsg("adminMessage","Права администратора выданы.","ok");};
+window.removeHelper=async id=>{if(!confirm("Снять права администратора у этого пользователя?"))return;const {error}=await db.rpc("revoke_exam_admin",{p_user_id:id});if(error){showMsg("adminMessage",error.message);return;}await loadAdmins();};
+
+(async()=>{
+  if(!configured || !window.supabase){await load();return;}
+  db=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+  await checkAdmin();
+  await load();
+  db.channel("exam-live").on("postgres_changes",{event:"*",schema:"public",table:"exam_slots"},load).on("postgres_changes",{event:"*",schema:"public",table:"exam_groups"},load).on("postgres_changes",{event:"*",schema:"public",table:"app_settings"},load).subscribe();
+})();
 </script>
-</body></html>
+</body>
+</html>
